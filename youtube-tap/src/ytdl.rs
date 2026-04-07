@@ -1,0 +1,160 @@
+use std::io::Cursor;
+use std::process::Stdio;
+use std::sync::Arc;
+use tokio::io::AsyncReadExt;
+use tokio::process::Command;
+use url::Url;
+use yt_dlp::Downloader;
+use yt_dlp::client::deps::Libraries;
+use zako3_tap_sdk::{
+    AttachedMetadata, AudioMetadataSuccessMessage, AudioRequestSuccessMessage, AudioSource,
+    AudioStreamSender, TapError, TapHandler, encode::decode_and_stream,
+};
+use zako3_types::{AudioCachePolicy, AudioCacheType, AudioMetadata};
+
+const YTDLP_BIN: &str = "/home/allen/.local/bin/yt-dlp";
+
+pub struct YtdlTapHandler {
+    downloader: Arc<Downloader>,
+}
+
+impl YtdlTapHandler {
+    pub async fn new() -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+        let libraries = Libraries::new(
+            std::path::PathBuf::from(YTDLP_BIN),
+            std::path::PathBuf::from("ffmpeg"),
+        );
+        let downloader = Downloader::builder(libraries, "/tmp/ytdl-tap")
+            .build()
+            .await?;
+        Ok(Self {
+            downloader: Arc::new(downloader),
+        })
+    }
+}
+
+/// Resolves an AudioSource to a yt-dlp-compatible string.
+/// - `youtu.be/<id>` → `https://youtu.be/<id>`
+/// - `*.youtube.com/watch?v=<id>` → `https://www.youtube.com/watch?v=<id>`
+/// - anything else → `ytsearch:<string>`
+fn resolve_ars(ars: &str) -> String {
+    let s = ars.to_string();
+    if let Ok(url) = Url::parse(&s) {
+        let host = url.host_str().unwrap_or("");
+        // youtu.be/ID
+        if host == "youtu.be" {
+            let id = url.path().trim_start_matches('/');
+            if !id.is_empty() {
+                return format!("https://youtu.be/{id}");
+            }
+        }
+        // *.youtube.com/watch?v=ID  (www, music, m, etc.)
+        if (host == "youtube.com" || host.ends_with(".youtube.com")) && url.path() == "/watch" {
+            if let Some(v) = url
+                .query_pairs()
+                .find(|(k, _)| k == "v")
+                .map(|(_, v)| v.into_owned())
+            {
+                if !v.is_empty() {
+                    return format!("https://www.youtube.com/watch?v={v}");
+                }
+            }
+        }
+    }
+    // Not a recognizable YouTube URL — treat as search query
+    format!("ytsearch:{s}")
+}
+
+#[async_trait::async_trait]
+impl TapHandler for YtdlTapHandler {
+    async fn handle_audio_metadata_request(
+        &self,
+        source: AudioSource,
+    ) -> Result<AudioMetadataSuccessMessage, TapError> {
+        let url = resolve_ars(source.as_str());
+        tracing::info!(url, "fetching metadata");
+
+        let video = self
+            .downloader
+            .fetch_video_infos(&url)
+            .await
+            .map_err(|e| TapError::Retriable(e.to_string()))?;
+
+        let mut metadatas = vec![AudioMetadata::Title(video.title.clone())];
+        if let Some(channel) = &video.channel {
+            metadatas.push(AudioMetadata::Artist(channel.clone()));
+        }
+
+        Ok(AudioMetadataSuccessMessage {
+            metadatas,
+            cache: AudioCachePolicy {
+                cache_type: AudioCacheType::ARHash,
+                ttl_seconds: Some(300),
+            },
+        })
+    }
+
+    async fn handle_audio_request(
+        &self,
+        source: AudioSource,
+        stream: AudioStreamSender,
+    ) -> Result<AudioRequestSuccessMessage, TapError> {
+        let url = resolve_ars(source.as_str());
+        tracing::info!(url, "received audio request");
+
+        let video = self
+            .downloader
+            .fetch_video_infos(&url)
+            .await
+            .map_err(|e| TapError::Retriable(e.to_string()))?;
+
+        let duration_secs = video.duration.map(|d| d as f32);
+
+        tokio::spawn(async move {
+            // Spawn yt-dlp — outputs native format (WebM/Opus) to stdout
+            let mut ytdlp = match Command::new(YTDLP_BIN)
+                .args(["--no-playlist", "-f", "bestaudio", "-o", "-", &url])
+                .stdout(Stdio::piped())
+                .stderr(Stdio::null())
+                .spawn()
+            {
+                Ok(c) => c,
+                Err(e) => {
+                    tracing::error!("failed to spawn yt-dlp: {e}");
+                    return;
+                }
+            };
+
+            let mut ytdlp_out = ytdlp.stdout.take().unwrap();
+
+            // Read all bytes from yt-dlp
+            let mut audio_bytes = Vec::new();
+            match ytdlp_out.read_to_end(&mut audio_bytes).await {
+                Ok(_) => {
+                    tracing::info!("downloaded {} bytes", audio_bytes.len());
+                }
+                Err(e) => {
+                    tracing::error!("failed to read yt-dlp output: {e}");
+                    return;
+                }
+            }
+
+            let _ = ytdlp.wait().await;
+
+            // Use SDK's ffmpeg pipeline: WebM/Opus → OGG/Opus
+            let cursor = Cursor::new(audio_bytes);
+            if let Err(e) = decode_and_stream(cursor, stream).await {
+                tracing::error!("decode_and_stream failed: {e}");
+            }
+        });
+
+        Ok(AudioRequestSuccessMessage {
+            cache: AudioCachePolicy {
+                cache_type: AudioCacheType::ARHash,
+                ttl_seconds: Some(300),
+            },
+            duration_secs,
+            metadatas: AttachedMetadata::UseCached,
+        })
+    }
+}

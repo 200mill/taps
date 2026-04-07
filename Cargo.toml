@@ -1,0 +1,27 @@
+[workspace]
+members = ["google-tap", "papago-tap", "youtube-tap"]
+resolver = "2"
+
+[workspace.dependencies]
+async-trait = "0.1.89"
+base64 = "0.22"
+bytes = "1.11.1"
+dotenvy = "0.15"
+hmac = "0.12"
+md5 = "0.7"
+reqwest = { version = "0.12", features = ["stream"] }
+rustls = { version = "0.23.37", features = ["ring"] }
+serde_json = "1"
+tokio = { version = "1.51.0", features = ["full"] }
+tracing = "0.1.44"
+tracing-subscriber = "0.3.23"
+tts-urls = "1.0.0"
+url = "2"
+urlencoding = "2.1"
+uuid = { version = "1.23.0", features = ["v4"] }
+yt-dlp = { version = "2.7.2", features = ["live-streaming"] }
+zako3-types = { version = "0.1.0", path = "../zako3/types" }
+zako3-tap-sdk = { version = "0.1.0", path = "../zako3/tap-sdk", features = ["auto-encode"] }
+
+[patch.crates-io.protofish2]
+path = "/home/allen/projects/protofish2-rs"
