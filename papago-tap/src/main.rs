@@ -16,6 +16,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         std::env::var("PAPAGO_API_TOKEN").expect("PAPAGO_API_TOKEN env var is required");
     let hub = std::env::var("TAPHUB_ENDPOINT").unwrap_or_else(|_| "api.zako.ac".to_string());
     let server_name = std::env::var("TAPHUB_SERVER_NAME").ok();
+    let healthcheck_port = std::env::var("TAPHUB_HEALTHCHECK_PORT").ok()
+        .map(|v| v.parse::<u16>().expect("TAPHUB_HEALTHCHECK_PORT must be a valid port number"));
 
     let mut builder = tap()
         //.cert_pem("cert.pem")
@@ -27,6 +29,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
     if let Some(ref sn) = server_name {
         builder = builder.server_name(sn);
+    }
+    if let Some(port) = healthcheck_port {
+        builder = builder.healthcheck_port(port);
     }
 
     builder.run(Arc::new(papago::PapagoTapHandler)).await?;
