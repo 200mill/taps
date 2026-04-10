@@ -11,14 +11,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         .ok();
     tracing_subscriber::fmt::init();
 
-    let tap_id =
-        std::env::var("PAPAGO_TAP_ID").expect("PAPAGO_TAP_ID env var is required");
+    let tap_id = std::env::var("PAPAGO_TAP_ID").expect("PAPAGO_TAP_ID env var is required");
     let api_token =
         std::env::var("PAPAGO_API_TOKEN").expect("PAPAGO_API_TOKEN env var is required");
 
     tap()
-        .cert_pem("cert.pem")
-        .hub("127.0.0.1:4001")
+        //.cert_pem("cert.pem")
+        .hub("api.zako.ac")
         .tap_id(&tap_id)
         .friendly_name("Papago TTS Tap")
         .api_token(&api_token)

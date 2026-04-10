@@ -15,8 +15,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let api_token = std::env::var("YOUTUBE_API_TOKEN").unwrap();
 
     tap()
-        .cert_pem("cert.pem")
-        .hub("127.0.0.1:4001")
+        //.cert_pem("cert.pem")
+        .hub("api.zako.ac")
         .tap_id(&tap_id)
         .friendly_name("YouTube Tap")
         .api_token(&api_token)

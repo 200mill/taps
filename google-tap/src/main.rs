@@ -15,8 +15,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let api_token = std::env::var("GOOGLE_API_TOKEN").unwrap();
 
     tap()
-        .cert_pem("cert.pem")
-        .hub("127.0.0.1:4001")
         .tap_id(&tap_id)
         .friendly_name("Google TTS Tap")
         .api_token(&api_token)

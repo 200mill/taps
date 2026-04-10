@@ -1,5 +1,5 @@
 [package]
-name = "ytdl-tap"
+name = "youtube-tap"
 version = "0.1.0"
 edition = "2024"
 
@@ -14,5 +14,4 @@ tracing-subscriber = { workspace = true }
 url = { workspace = true }
 uuid = { workspace = true }
 yt-dlp = { workspace = true }
-zako3-types = { workspace = true }
 zako3-tap-sdk = { workspace = true }

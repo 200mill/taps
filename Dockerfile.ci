@@ -1,0 +1,13 @@
+# CI publish — copies pre-built binary from target/release/ into the image.
+# Used by GitHub Actions after `cargo build --workspace --release`.
+FROM debian:bookworm-slim
+ARG BIN
+
+RUN if [ "$BIN" = "youtube-tap" ]; then \
+      apt-get update && \
+      apt-get install -y --no-install-recommends python3 yt-dlp && \
+      rm -rf /var/lib/apt/lists/*; \
+    fi
+
+COPY target/release/${BIN} /usr/local/bin/app
+ENTRYPOINT ["/usr/local/bin/app"]

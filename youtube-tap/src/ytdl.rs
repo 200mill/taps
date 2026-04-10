@@ -10,7 +10,7 @@ use zako3_tap_sdk::{
     AttachedMetadata, AudioMetadataSuccessMessage, AudioRequestSuccessMessage, AudioSource,
     AudioStreamSender, TapError, TapHandler, encode::decode_and_stream,
 };
-use zako3_types::{AudioCachePolicy, AudioCacheType, AudioMetadata};
+use zako3_tap_sdk::{AudioCachePolicy, AudioCacheType, AudioMetadata};
 
 const YTDLP_BIN: &str = "/home/allen/.local/bin/yt-dlp";
 

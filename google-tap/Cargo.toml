@@ -13,5 +13,4 @@ tokio = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 tts-urls = { workspace = true }
-zako3-types = { workspace = true }
 zako3-tap-sdk = { workspace = true }
