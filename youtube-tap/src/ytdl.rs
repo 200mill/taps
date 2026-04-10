@@ -12,16 +12,17 @@ use zako3_tap_sdk::{
 };
 use zako3_tap_sdk::{AudioCachePolicy, AudioCacheType, AudioMetadata};
 
-const YTDLP_BIN: &str = "/home/allen/.local/bin/yt-dlp";
-
 pub struct YtdlTapHandler {
     downloader: Arc<Downloader>,
+    ytdlp_bin: String,
 }
 
 impl YtdlTapHandler {
     pub async fn new() -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+        let ytdlp_bin = std::env::var("YTDLP_BIN")
+            .unwrap_or_else(|_| "/usr/local/bin/yt-dlp".to_string());
         let libraries = Libraries::new(
-            std::path::PathBuf::from(YTDLP_BIN),
+            std::path::PathBuf::from(&ytdlp_bin),
             std::path::PathBuf::from("ffmpeg"),
         );
         let downloader = Downloader::builder(libraries, "/tmp/ytdl-tap")
@@ -29,6 +30,7 @@ impl YtdlTapHandler {
             .await?;
         Ok(Self {
             downloader: Arc::new(downloader),
+            ytdlp_bin,
         })
     }
 }
@@ -110,9 +112,10 @@ impl TapHandler for YtdlTapHandler {
 
         let duration_secs = video.duration.map(|d| d as f32);
 
+        let ytdlp_bin = self.ytdlp_bin.clone();
         tokio::spawn(async move {
             // Spawn yt-dlp — outputs native format (WebM/Opus) to stdout
-            let mut ytdlp = match Command::new(YTDLP_BIN)
+            let mut ytdlp = match Command::new(&ytdlp_bin)
                 .args(["--no-playlist", "-f", "bestaudio", "-o", "-", &url])
                 .stdout(Stdio::piped())
                 .stderr(Stdio::null())
