@@ -21,7 +21,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     });
 
     let mut builder = tap()
-        .cert_pem("cert.pem")
         .hub(&hub)
         .tap_id(&tap_id)
         .friendly_name("YouTube Tap")

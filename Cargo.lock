@@ -2324,6 +2324,7 @@ dependencies = [
 [[package]]
 name = "sam-tts"
 version = "0.1.0"
+source = "git+https://github.com/mincomk/sam-tts#b1517153a54b9a423a52d0c44f225b8dadc12493"
 
 [[package]]
 name = "same-file"
@@ -3967,3 +3968,8 @@ dependencies = [
  "cc",
  "pkg-config",
 ]
+
+[[patch.unused]]
+name = "protofish2"
+version = "0.6.6"
+source = "git+https://github.com/mincomk/protofish2-rs?branch=main#cdc282901d3f2d1c2cb5af473a8ab5fcfa9ece6b"
