@@ -24,4 +24,5 @@ zako3-tap-sdk = { version = "0.1.1", features = ["auto-encode", "healthcheck"] }
 sam-tts = { git = "https://github.com/mincomk/sam-tts" }
 
 [patch.crates-io.protofish2]
-path = "https://github.com/mincomk/protofish2-rs"
+git = "https://github.com/mincomk/protofish2-rs"
+branch = "main"
