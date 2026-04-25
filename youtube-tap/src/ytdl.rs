@@ -19,8 +19,8 @@ pub struct YtdlTapHandler {
 
 impl YtdlTapHandler {
     pub async fn new() -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
-        let ytdlp_bin = std::env::var("YTDLP_BIN")
-            .unwrap_or_else(|_| "/usr/local/bin/yt-dlp".to_string());
+        let ytdlp_bin =
+            std::env::var("YTDLP_BIN").unwrap_or_else(|_| "/usr/local/bin/yt-dlp".to_string());
         let libraries = Libraries::new(
             std::path::PathBuf::from(&ytdlp_bin),
             std::path::PathBuf::from("ffmpeg"),
@@ -35,11 +35,16 @@ impl YtdlTapHandler {
     }
 }
 
+struct ARSResolutionResult {
+    url: String,
+    is_search: bool,
+}
+
 /// Resolves an AudioSource to a yt-dlp-compatible string.
 /// - `youtu.be/<id>` → `https://youtu.be/<id>`
 /// - `*.youtube.com/watch?v=<id>` → `https://www.youtube.com/watch?v=<id>`
 /// - anything else → `ytsearch:<string>`
-fn resolve_ars(ars: &str) -> String {
+fn resolve_ars(ars: &str) -> ARSResolutionResult {
     let s = ars.to_string();
     if let Ok(url) = Url::parse(&s) {
         let host = url.host_str().unwrap_or("");
@@ -47,7 +52,10 @@ fn resolve_ars(ars: &str) -> String {
         if host == "youtu.be" {
             let id = url.path().trim_start_matches('/');
             if !id.is_empty() {
-                return format!("https://youtu.be/{id}");
+                return ARSResolutionResult {
+                    url: format!("https://youtu.be/{id}"),
+                    is_search: false,
+                };
             }
         }
         // *.youtube.com/shorts/ID
@@ -56,7 +64,10 @@ fn resolve_ars(ars: &str) -> String {
         {
             let id = url.path().trim_start_matches("/shorts/");
             if !id.is_empty() {
-                return format!("https://www.youtube.com/watch?v={id}");
+                return ARSResolutionResult {
+                    url: format!("https://www.youtube.com/watch?v={id}"),
+                    is_search: false,
+                };
             }
         }
         // *.youtube.com/watch?v=ID  (www, music, m, etc.)
@@ -67,13 +78,19 @@ fn resolve_ars(ars: &str) -> String {
                 .map(|(_, v)| v.into_owned())
             {
                 if !v.is_empty() {
-                    return format!("https://www.youtube.com/watch?v={v}");
+                    return ARSResolutionResult {
+                        url: format!("https://www.youtube.com/watch?v={v}"),
+                        is_search: false,
+                    };
                 }
             }
         }
     }
     // Not a recognizable YouTube URL — treat as search query
-    format!("ytsearch:{s}")
+    ARSResolutionResult {
+        url: format!("ytsearch:{s}"),
+        is_search: true,
+    }
 }
 
 #[async_trait::async_trait]
@@ -82,7 +99,8 @@ impl TapHandler for YtdlTapHandler {
         &self,
         source: AudioSource,
     ) -> Result<AudioMetadataSuccessMessage, TapError> {
-        let url = resolve_ars(source.as_str());
+        let r = resolve_ars(source.as_str());
+        let url = r.url;
         tracing::info!(url, "fetching metadata");
 
         let video = self
@@ -96,11 +114,16 @@ impl TapHandler for YtdlTapHandler {
             metadatas.push(AudioMetadata::Artist(channel.clone()));
         }
 
+        if !r.is_search {
+            metadatas.push(AudioMetadata::Url(url));
+        }
+
         Ok(AudioMetadataSuccessMessage {
             metadatas,
             cache: AudioCachePolicy {
                 cache_type: AudioCacheType::ARHash,
-                ttl_seconds: Some(300),
+                // 1 month
+                ttl_seconds: Some(30 * 24 * 3600),
             },
         })
     }
@@ -110,7 +133,8 @@ impl TapHandler for YtdlTapHandler {
         source: AudioSource,
         stream: AudioStreamSender,
     ) -> Result<AudioRequestSuccessMessage, TapError> {
-        let url = resolve_ars(source.as_str());
+        let r = resolve_ars(source.as_str());
+        let url = r.url;
         tracing::info!(url, "received audio request");
 
         let video = self
