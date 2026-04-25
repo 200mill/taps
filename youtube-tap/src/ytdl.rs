@@ -50,6 +50,15 @@ fn resolve_ars(ars: &str) -> String {
                 return format!("https://youtu.be/{id}");
             }
         }
+        // *.youtube.com/shorts/ID
+        if (host == "youtube.com" || host.ends_with(".youtube.com"))
+            && url.path().starts_with("/shorts/")
+        {
+            let id = url.path().trim_start_matches("/shorts/");
+            if !id.is_empty() {
+                return format!("https://www.youtube.com/watch?v={id}");
+            }
+        }
         // *.youtube.com/watch?v=ID  (www, music, m, etc.)
         if (host == "youtube.com" || host.ends_with(".youtube.com")) && url.path() == "/watch" {
             if let Some(v) = url
