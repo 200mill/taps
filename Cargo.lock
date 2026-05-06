@@ -1829,7 +1829,7 @@ dependencies = [
 [[package]]
 name = "protofish2"
 version = "0.6.7"
-source = "git+https://github.com/mincomk/protofish2-rs?branch=main#7abd358d772d644bec361352b025918f1c616dc6"
+source = "git+https://github.com/mincomk/protofish2-rs?branch=main#54f8f42870201e705546702e2af7751c372280f9"
 dependencies = [
  "bytes",
  "dashmap",
