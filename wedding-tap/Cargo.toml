@@ -1,0 +1,16 @@
+[package]
+name = "wedding-tap"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+async-trait = { workspace = true }
+bytes = { workspace = true }
+dotenvy = { workspace = true }
+reqwest = { workspace = true }
+rustls = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+tts-urls = { workspace = true }
+zako3-tap-sdk = { workspace = true }

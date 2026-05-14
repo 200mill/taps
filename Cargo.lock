@@ -1829,7 +1829,6 @@ dependencies = [
 [[package]]
 name = "protofish2"
 version = "0.6.7"
-source = "git+https://github.com/mincomk/protofish2-rs?branch=main#54f8f42870201e705546702e2af7751c372280f9"
 dependencies = [
  "bytes",
  "dashmap",
@@ -3286,6 +3285,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "804f18a4ac2676ffb4e8b5b5fa9ae38af06df08162314f96a68d2a363e21a8ca"
 dependencies = [
  "rustls-pki-types",
+]
+
+[[package]]
+name = "wedding-tap"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "dotenvy",
+ "reqwest 0.12.28",
+ "rustls",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "tts-urls",
+ "zako3-tap-sdk",
 ]
 
 [[package]]
