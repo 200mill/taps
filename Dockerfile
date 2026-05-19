@@ -11,6 +11,18 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends libssl3 ca-certificates ffmpeg wget git git-lfs && \
     rm -rf /var/lib/apt/lists/*
 
+# Microsoft's official ONNX Runtime: SSE4.1 baseline with runtime-dispatched
+# AVX/AVX2/AVX-512 kernels. Works on CPUs without AVX2/FMA (unlike pyke's
+# prebuilt that ort would otherwise download).
+ARG ORT_VERSION=1.22.0
+RUN if [ "$BIN" = "supertonic-tap" ]; then \
+      wget -q https://github.com/microsoft/onnxruntime/releases/download/v${ORT_VERSION}/onnxruntime-linux-x64-${ORT_VERSION}.tgz -O /tmp/ort.tgz && \
+      mkdir -p /opt/onnxruntime && \
+      tar -xzf /tmp/ort.tgz -C /opt/onnxruntime --strip-components=1 && \
+      rm /tmp/ort.tgz; \
+    fi
+ENV ORT_DYLIB_PATH=/opt/onnxruntime/lib/libonnxruntime.so
+
 RUN if [ "$BIN" = "supertonic-tap" ]; then \
       git lfs install --system && \
       git clone --depth=1 https://huggingface.co/Supertone/supertonic-3 /opt/supertonic && \
