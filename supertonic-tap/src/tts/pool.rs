@@ -2,6 +2,7 @@ use anyhow::{Context, Result};
 use crossbeam_channel::{Sender, bounded};
 use std::sync::Arc;
 use std::thread;
+use std::time::Instant;
 use tokio::sync::oneshot;
 use zako3_tap_sdk::TapError;
 
@@ -50,6 +51,8 @@ impl TtsPool {
                     tracing::info!("supertonic worker {worker_id} ready");
 
                     while let Ok(job) = rx.recv() {
+                        let start_at = Instant::now();
+
                         let result = (|| -> Result<Vec<u8>, TapError> {
                             let (wav, _dur) = tts
                                 .synthesize(
@@ -64,6 +67,8 @@ impl TtsPool {
                             wav_bytes(&wav, tts.sample_rate)
                                 .map_err(|e| TapError::Retriable(e.to_string()))
                         })();
+                        tracing::info!("synthesize taken {}ms", start_at.elapsed().as_millis());
+
                         let _ = job.reply.send(result);
                     }
                     tracing::info!("supertonic worker {worker_id} exiting");

@@ -348,10 +348,10 @@ pub fn load_voice_style(voice_style_paths: &[String], verbose: bool) -> Result<S
 fn load_backend_webgpu(config: &HashMap<String, String>) -> Result<ExecutionProviderDispatch> {
     let webgpu_device_id = config
         .get("WEBGPU_DEVICE_ID")
-        .cloned()
-        .unwrap_or_else(|| "0".to_string())
+        .map(|v| v.as_str())
+        .unwrap_or("0")
         .parse::<i32>()
-        .inspect_err(|e| tracing::error!("{e}"))?;
+        .context("Failed to parse WEBGPU_DEVICE_ID")?;
 
     let webgpu = ort::ep::WebGPU::default().with_device_id(webgpu_device_id);
 
@@ -362,10 +362,10 @@ fn load_backend_webgpu(config: &HashMap<String, String>) -> Result<ExecutionProv
 fn load_backend_cuda(config: &HashMap<String, String>) -> Result<ExecutionProviderDispatch> {
     let cuda_device_id = config
         .get("CUDA_DEVICE_ID")
-        .cloned()
-        .unwrap_or_else(|| "0".to_string())
+        .map(|v| v.as_str())
+        .unwrap_or("0")
         .parse::<i32>()
-        .inspect_err(|e| tracing::error!("{e}"))?;
+        .context("Failed to parse WEBGPU_DEVICE_ID")?;
 
     let cuda = ort::ep::CUDA::default().with_device_id(cuda_device_id);
 
@@ -375,8 +375,8 @@ fn load_backend_cuda(config: &HashMap<String, String>) -> Result<ExecutionProvid
 fn load_backends(config: &HashMap<String, String>) -> Vec<ExecutionProviderDispatch> {
     let enabled_backends = config
         .get("ENABLED_BACKENDS")
-        .cloned()
-        .unwrap_or_else(|| "all".to_string())
+        .map(|v| v.as_str())
+        .unwrap_or("")
         .split(",")
         .map(Into::into)
         .collect::<Vec<String>>();
@@ -417,7 +417,7 @@ pub fn load_text_to_speech(onnx_dir: &str) -> Result<TextToSpeech> {
     let vector_est_path = format!("{}/vector_estimator.onnx", onnx_dir);
     let vocoder_path = format!("{}/vocoder.onnx", onnx_dir);
 
-    tracing::info!("Session successfully loaded with Vulkan GPU acceleration!");
+    tracing::info!("Session successfully loaded!");
 
     let providers = load_backends(&std::env::vars().collect());
 

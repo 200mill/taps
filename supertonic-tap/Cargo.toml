@@ -15,7 +15,7 @@ crossbeam-channel = "0.5.15"
 dotenvy = { workspace = true }
 hound = "3.5.1"
 ndarray = "0.17.2"
-ort = { version = "2.0.0-rc.12", default-features = false, features = ["load-dynamic", "ndarray", "tracing", "api-24"] }
+ort = { version = "2.0.0-rc.12" }
 rand = "0.10.1"
 rand_distr = "0.6.0"
 regex = "1.12.3"
