@@ -1,6 +1,6 @@
 # CI publish — copies pre-built binary from target/release/ into the image.
 # Used by GitHub Actions after `cargo build --workspace --release`.
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 ARG BIN
 
 RUN apt-get update && \

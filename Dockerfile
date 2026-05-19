@@ -1,10 +1,10 @@
 # Full multi-stage build — for local `docker build --build-arg BIN=<tap-name> .`
-FROM rust:1-slim AS builder
+FROM rust:1-slim-trixie AS builder
 WORKDIR /app
 COPY . .
 RUN cargo build --workspace --release
 
-FROM debian:bookworm-slim AS runtime
+FROM debian:trixie-slim AS runtime
 ARG BIN
 
 RUN apt-get update && \
