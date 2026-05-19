@@ -33,11 +33,11 @@ pub fn ensure_assets(model_dir: &Path, hf_repo: &str) -> Result<()> {
                 model_dir.display()
             );
         }
-    } else if let Some(parent) = model_dir.parent() {
-        if !parent.as_os_str().is_empty() {
-            std::fs::create_dir_all(parent)
-                .with_context(|| format!("failed to create {}", parent.display()))?;
-        }
+    } else if let Some(parent) = model_dir.parent()
+        && !parent.as_os_str().is_empty()
+    {
+        std::fs::create_dir_all(parent)
+            .with_context(|| format!("failed to create {}", parent.display()))?;
     }
 
     tracing::info!(

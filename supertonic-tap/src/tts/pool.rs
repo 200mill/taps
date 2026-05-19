@@ -2,6 +2,7 @@ use anyhow::{Context, Result};
 use crossbeam_channel::{Sender, bounded};
 use std::sync::Arc;
 use std::thread;
+use std::time::Instant;
 use tokio::sync::oneshot;
 use zako3_tap_sdk::TapError;
 
@@ -28,7 +29,7 @@ pub struct TtsPool {
 impl TtsPool {
     pub fn spawn<I>(workers: usize, init: I, opts: TtsOpts) -> Result<Self>
     where
-        I: Fn() -> Result<(TextToSpeech, Style)> + Send + Sync + 'static,
+        I: Fn(u32) -> Result<(TextToSpeech, Style)> + Send + Sync + 'static,
     {
         let workers = workers.max(1);
         let (tx, rx) = bounded::<TtsJob>(workers * 4);
@@ -40,7 +41,7 @@ impl TtsPool {
             thread::Builder::new()
                 .name(format!("supertonic-tts-{worker_id}"))
                 .spawn(move || {
-                    let (mut tts, style) = match init() {
+                    let (mut tts, style) = match init(worker_id as u32) {
                         Ok(pair) => pair,
                         Err(e) => {
                             tracing::error!("worker {worker_id} init failed: {e:?}");
@@ -50,6 +51,8 @@ impl TtsPool {
                     tracing::info!("supertonic worker {worker_id} ready");
 
                     while let Ok(job) = rx.recv() {
+                        let start_at = Instant::now();
+
                         let result = (|| -> Result<Vec<u8>, TapError> {
                             let (wav, _dur) = tts
                                 .synthesize(
@@ -64,6 +67,8 @@ impl TtsPool {
                             wav_bytes(&wav, tts.sample_rate)
                                 .map_err(|e| TapError::Retriable(e.to_string()))
                         })();
+                        tracing::info!("synthesize taken {}ms", start_at.elapsed().as_millis());
+
                         let _ = job.reply.send(result);
                     }
                     tracing::info!("supertonic worker {worker_id} exiting");
