@@ -69,8 +69,17 @@ impl TapHandler for WeddingTapHandler {
         let url = tts_urls::google_translate::url(&text, "ko");
         tracing::info!(url, "fetching Google TTS audio");
 
-        // Download MP3 bytes
-        let mp3_bytes = include_bytes!("wd.mp3").to_vec();
+        // 1/4 chance to play the cursed track
+        let cursed = {
+            use std::collections::hash_map::RandomState;
+            use std::hash::{BuildHasher, Hasher};
+            RandomState::new().build_hasher().finish() % 4 == 0
+        };
+        let mp3_bytes = if cursed {
+            include_bytes!("wdcursed.mp3").to_vec()
+        } else {
+            include_bytes!("wd.mp3").to_vec()
+        };
 
         tokio::spawn(async move {
             // Use SDK's ffmpeg pipeline: MP3 → OGG/Opus
