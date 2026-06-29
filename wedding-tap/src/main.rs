@@ -55,7 +55,7 @@ impl TapHandler for WeddingTapHandler {
             metadatas: vec![AudioMetadata::Title(source.as_str().to_string())],
             cache: AudioCachePolicy {
                 cache_type: AudioCacheType::ARHash,
-                ttl_seconds: None, // TTS output is deterministic — cache forever
+                ttl_seconds: Some(1440_u32), // TTS output is deterministic — cache forever
             },
         })
     }
