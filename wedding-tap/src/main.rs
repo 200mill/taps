@@ -69,8 +69,8 @@ impl TapHandler for WeddingTapHandler {
         let url = tts_urls::google_translate::url(&text, "ko");
         tracing::info!(url, "fetching Google TTS audio");
 
-        // 1/4 chance to play the cursed track
-        let cursed = {
+        // Query "c" always plays cursed; otherwise 1/4 random chance
+        let cursed = text.trim().eq_ignore_ascii_case("c") || {
             use std::collections::hash_map::RandomState;
             use std::hash::{BuildHasher, Hasher};
             RandomState::new().build_hasher().finish() % 4 == 0
