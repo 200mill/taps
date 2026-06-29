@@ -108,13 +108,34 @@ pub fn preprocess_text(text: &str, lang: &str) -> Result<String> {
         text = text.replace(from, to);
     }
 
-    text = Regex::new(r" ,").unwrap().replace_all(&text, ",").to_string();
-    text = Regex::new(r" \.").unwrap().replace_all(&text, ".").to_string();
-    text = Regex::new(r" !").unwrap().replace_all(&text, "!").to_string();
-    text = Regex::new(r" \?").unwrap().replace_all(&text, "?").to_string();
-    text = Regex::new(r" ;").unwrap().replace_all(&text, ";").to_string();
-    text = Regex::new(r" :").unwrap().replace_all(&text, ":").to_string();
-    text = Regex::new(r" '").unwrap().replace_all(&text, "'").to_string();
+    text = Regex::new(r" ,")
+        .unwrap()
+        .replace_all(&text, ",")
+        .to_string();
+    text = Regex::new(r" \.")
+        .unwrap()
+        .replace_all(&text, ".")
+        .to_string();
+    text = Regex::new(r" !")
+        .unwrap()
+        .replace_all(&text, "!")
+        .to_string();
+    text = Regex::new(r" \?")
+        .unwrap()
+        .replace_all(&text, "?")
+        .to_string();
+    text = Regex::new(r" ;")
+        .unwrap()
+        .replace_all(&text, ";")
+        .to_string();
+    text = Regex::new(r" :")
+        .unwrap()
+        .replace_all(&text, ":")
+        .to_string();
+    text = Regex::new(r" '")
+        .unwrap()
+        .replace_all(&text, "'")
+        .to_string();
 
     while text.contains("\"\"") {
         text = text.replace("\"\"", "\"");
@@ -126,7 +147,10 @@ pub fn preprocess_text(text: &str, lang: &str) -> Result<String> {
         text = text.replace("``", "`");
     }
 
-    text = Regex::new(r"\s+").unwrap().replace_all(&text, " ").to_string();
+    text = Regex::new(r"\s+")
+        .unwrap()
+        .replace_all(&text, " ")
+        .to_string();
     text = text.trim().to_string();
 
     if !text.is_empty() {
