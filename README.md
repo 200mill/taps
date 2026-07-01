@@ -9,6 +9,6 @@ This repository includes official taps for Zako3.
 * [papago](./papago-tap/)
 * [sam](./sam-tap/)
 * [supertonic](./supertonic-tap/)
-### music
+### Music
 * [wedding](./wedding-tap/)
 * [youtube](./youtube-tap/)
